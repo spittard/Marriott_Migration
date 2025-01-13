@@ -1,0 +1,109 @@
+---
+Metadata:
+  AWSToolsMetrics:
+    IaC_Generator: "arn:aws:cloudformation:us-east-1:854213821615:generatedTemplate/6e5baf02-2315-4363-82e8-daa386c500ef"
+Resources:
+  EC2Instance00i0e449eb71450f565f00sT0qy:
+    Type: "AWS::EC2::Instance"
+    UpdateReplacePolicy: "Retain"
+    Properties:
+      Tenancy: "default"
+      InstanceInitiatedShutdownBehavior: "stop"
+      BlockDeviceMappings:
+        - Ebs:
+            SnapshotId: "snap-0012ba513189c41ad" # Update this! snap-0012ba513189c41ad
+            VolumeType: "gp2"
+            VolumeSize: 30
+            Encrypted: false
+            DeleteOnTermination: true
+          DeviceName: "/dev/sda1"
+      AvailabilityZone: "us-east-1b"
+      PrivateDnsNameOptions:
+        EnableResourceNameDnsARecord: false
+        HostnameType: "ip-name"
+        EnableResourceNameDnsAAAARecord: false
+      EbsOptimized: false
+      DisableApiTermination: true
+      KeyName: "Micro Test"
+      SourceDestCheck: true
+      PlacementGroupName: ""
+      NetworkInterfaces:
+        - NetworkInterfaceId: !Ref EC2NetworkInterface00eni0beda7e3c0dd2fd3900x67EN
+          DeviceIndex: "0"
+      ImageId: "ami-0790368b78dc061cb"
+      InstanceType: "t2.micro"
+      Monitoring: false
+      Tags:
+        - Value: "Micro Test"
+          Key: "Name"
+      CreditSpecification:
+        CPUCredits: "standard"
+  EC2Subnet00subnet92f52ee50083zeD:
+    Type: "AWS::EC2::Subnet"
+    UpdateReplacePolicy: "Retain"
+    Properties:
+      VpcId:
+        Ref: "EC2VPC00vpc84c84de100xG4EZ"
+      MapPublicIpOnLaunch: false
+      EnableDns64: false
+      AvailabilityZone: "us-east-1b"
+      PrivateDnsNameOptionsOnLaunch:
+        EnableResourceNameDnsARecord: false
+        HostnameType: "ip-name"
+        EnableResourceNameDnsAAAARecord: false
+      CidrBlock: "10.0.0.0/24"
+      Ipv6Native: false
+      Tags:
+        - Value: "Energy-Pathways"
+          Key: "Name"
+  EC2VPC00vpc84c84de100xG4EZ:
+    UpdateReplacePolicy: "Retain"
+    Type: "AWS::EC2::VPC"
+    DeletionPolicy: "Retain"  # Keep this if you are NOT importing the VPC
+    Properties:
+      CidrBlock: "10.0.0.0/16"
+      EnableDnsSupport: true
+      InstanceTenancy: "default"
+      EnableDnsHostnames: false
+      Tags:
+        - Value: "Energy-Pathways"
+          Key: "Name"
+  EC2SecurityGroup00sg064aa0cc1827a0c9800kufx8:
+    UpdateReplacePolicy: "Retain"
+    Type: "AWS::EC2::SecurityGroup"
+    DeletionPolicy: "Retain"  # Keep this if you are NOT importing the security group
+    Properties:
+      GroupDescription: "launch-wizard-2 created 2024-09-17T18:43:17.575Z"
+      GroupName: "launch-wizard-2"
+      VpcId:
+        Ref: "EC2VPC00vpc84c84de100xG4EZ"
+      SecurityGroupIngress:
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: "tcp"
+          FromPort: 3389
+          ToPort: 3389
+      SecurityGroupEgress:
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: "-1"
+          FromPort: -1
+          ToPort: -1
+  EC2NetworkInterface00eni0beda7e3c0dd2fd3900x67EN:
+    Type: "AWS::EC2::NetworkInterface"
+    UpdateReplacePolicy: "Retain"
+    Properties:
+      Description: ""
+      PrivateIpAddresses:
+        - PrivateIpAddress: "10.0.0.182"
+          Primary: true
+      SecondaryPrivateIpAddressCount: 0
+      Ipv6PrefixCount: 0
+      Ipv4Prefixes: []
+      Ipv4PrefixCount: 0
+      GroupSet:
+        - Ref: "EC2SecurityGroup00sg064aa0cc1827a0c9800kufx8"
+      Ipv6Prefixes: []
+      SubnetId:
+        Ref: "EC2Subnet00subnet92f52ee50083zeD"
+      SourceDestCheck: true
+      InterfaceType: "interface"
+      Tags: []
