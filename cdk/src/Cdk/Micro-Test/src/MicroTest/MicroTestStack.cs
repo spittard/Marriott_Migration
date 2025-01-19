@@ -134,7 +134,7 @@ namespace MicroTestStack
                 {
                     EnableResourceNameDnsARecord = false,
                     HostnameType = "ip-name",
-                   //EnableResourceNameDnsAAAARecord = false,
+                    EnableResourceNameDnsAAAARecord = false,
                 },
                 EbsOptimized = false,
                 DisableApiTermination = true,
@@ -162,7 +162,7 @@ namespace MicroTestStack
                 },
                 CreditSpecification = new CfnInstance.CreditSpecificationProperty
                 {
-                    //CPUCredits = "standard",
+                    CpuCredits = "standard",
                 },
             });
         }

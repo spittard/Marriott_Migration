@@ -1,0 +1,387 @@
+Metadata:
+  AWSToolsMetrics:
+    IaC_Generator: "arn:aws:cloudformation:us-east-1:854213821615:generatedTemplate/72eadc23-5603-4a25-9f32-f1bcf97a8661"
+
+Resources:
+  IAMInstanceProfile00:
+    UpdateReplacePolicy: "Delete"
+    Type: "AWS::IAM::InstanceProfile"
+    DeletionPolicy: "Delete"
+    Properties:
+      Path: "/"
+      Roles:
+        - !Ref IAMRole00
+      InstanceProfileName: !Ref IAMRole00
+
+  EC2Subnet00:
+    UpdateReplacePolicy: "Delete"
+    Type: "AWS::EC2::Subnet"
+    DeletionPolicy: "Delete"
+    Properties:
+      VpcId: !Ref EC2VPC00
+      MapPublicIpOnLaunch: false
+      EnableDns64: false
+      AvailabilityZoneId: "use1-az6" # Consider using AvailabilityZone instead
+      PrivateDnsNameOptionsOnLaunch:
+        EnableResourceNameDnsARecord: false
+        HostnameType: "ip-name"
+        EnableResourceNameDnsAAAARecord: false
+      CidrBlock: "10.0.0.0/24"
+      Ipv6Native: false
+      Tags:
+        - Value: "Ritz"
+          Key: "Name"
+
+  EC2Instance00:
+    UpdateReplacePolicy: "Delete"
+    Type: "AWS::EC2::Instance"
+    DeletionPolicy: "Delete"
+    Properties:
+      Tenancy: "default"
+      SecurityGroupIds:
+        - !Ref EC2SecurityGroup00 # Use !Ref and the logical ID
+      PrivateIpAddress: "10.0.0.228"
+      BlockDeviceMappings:
+        - Ebs:
+            SnapshotId: "snap-018eb3165945768d3" # Consider using a parameter
+            VolumeType: "gp2"
+            Iops: 300
+            VolumeSize: 100
+            Encrypted: false
+            DeleteOnTermination: true
+          DeviceName: "/dev/sda1"
+        - Ebs:
+            VolumeType: "gp3"
+            KmsKeyId: !GetAtt KMSKey00.Arn
+            Encrypted: true
+            Iops: 3000
+            VolumeSize: 400
+            DeleteOnTermination: false
+          DeviceName: "xvdb"
+        - Ebs:
+            VolumeType: "gp2"
+            Iops: 300
+            VolumeSize: 100
+            Encrypted: false
+            DeleteOnTermination: false
+          DeviceName: "xvdf"
+      IamInstanceProfile: !Ref IAMInstanceProfile00
+      SubnetId: !Ref EC2Subnet00
+      EbsOptimized: false
+      NetworkInterfaces:
+        - PrivateIpAddresses:
+            - PrivateIpAddress: "10.0.0.228"
+              Primary: true
+          SecondaryPrivateIpAddressCount: 0
+          DeviceIndex: "0"
+          GroupSet:
+            - !Ref EC2SecurityGroup00
+          Ipv6Addresses: []
+          SubnetId: !Ref EC2Subnet00
+          AssociatePublicIpAddress: true
+          NetworkInterfaceId: !Ref EC2NetworkInterface00
+          DeleteOnTermination: true
+      ImageId: "ami-0bde1eb2c18cb2abe" # Consider using a parameter or SSM parameter
+      InstanceType: "t2.large"
+      Monitoring: false
+      Tags:
+        - Value: "Marriott-DevWeb-2022"
+          Key: "Name"
+      InstanceInitiatedShutdownBehavior: "stop"
+      CpuOptions:
+        ThreadsPerCore: 1
+        CoreCount: 2
+      AvailabilityZone: "us-east-1c"
+      PrivateDnsNameOptions:
+        EnableResourceNameDnsARecord: false
+        HostnameType: "ip-name"
+        EnableResourceNameDnsAAAARecord: false
+      DisableApiTermination: false
+      KeyName: "Marriott-DevWeb-2022" # Consider using a parameter
+      SourceDestCheck: true
+      PlacementGroupName: ""
+      CreditSpecification:
+        CPUCredits: "standard"
+
+  EC2Volume00vol0112c8710f0ff8247:
+    UpdateReplacePolicy: "Delete"
+    Type: "AWS::EC2::Volume"
+    DeletionPolicy: "Delete"
+    Properties:
+      MultiAttachEnabled: false
+      SnapshotId: "snap-018eb3165945768d3" # Consider using a parameter
+      VolumeType: "gp2"
+      Encrypted: false
+      Size: 100
+      AutoEnableIO: true
+      AvailabilityZone: "us-east-1c"
+      Iops: 300
+      Tags:
+        - Value: "Marriott-DevWeb-2022-OS"
+          Key: "Name"
+
+  EC2NetworkInterface00:
+    UpdateReplacePolicy: "Delete"
+    Type: "AWS::EC2::NetworkInterface"
+    DeletionPolicy: "Delete"
+    Properties:
+      Description: ""
+      PrivateIpAddress: "10.0.0.228"
+      PrivateIpAddresses:
+        - PrivateIpAddress: "10.0.0.228"
+          Primary: true
+      SecondaryPrivateIpAddressCount: 0
+      Ipv6PrefixCount: 0
+      Ipv4Prefixes: []
+      Ipv4PrefixCount: 0
+      GroupSet:
+        - !Ref EC2SecurityGroup00
+      Ipv6Prefixes: []
+      SubnetId: !Ref EC2Subnet00
+      SourceDestCheck: true
+      InterfaceType: "interface"
+      Tags: []
+
+  EC2VolumeAttachment00vol0112c8710f0ff824700Vo0P7:
+    UpdateReplacePolicy: "Delete"
+    Type: "AWS::EC2::VolumeAttachment"
+    DeletionPolicy: "Delete"
+    Properties:
+      InstanceId: !Ref EC2Instance00
+      VolumeId: !Ref EC2Volume00vol0112c8710f0ff8247
+      Device: "/dev/sda1"
+
+  EC2VPC00:
+    UpdateReplacePolicy: "Delete"
+    Type: "AWS::EC2::VPC"
+    DeletionPolicy: "Delete"
+    Properties:
+      CidrBlock: "10.0.0.0/16"
+      EnableDnsSupport: true
+      InstanceTenancy: "default"
+      EnableDnsHostnames: false
+      Tags:
+        - Value: "Ritz"
+          Key: "Name"
+
+  IAMRole00:
+    UpdateReplacePolicy: "Delete"
+    Type: "AWS::IAM::Role"
+    DeletionPolicy: "Delete"
+    Properties:
+      Path: "/"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+      MaxSessionDuration: 3600
+      RoleName: "IAM_Role_AmazonSSMManagedInstanceCore"
+      Description: "Allows SessionManager connections to EC2"
+      Policies:
+        - PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Resource: "*"
+                Action:
+                  - "ssm:DescribeAssociation"
+                  - "ssm:GetDeployablePatchSnapshotForInstance"
+                  - "ssm:GetDocument"
+                  - "ssm:DescribeDocument"
+                  - "ssm:GetManifest"
+                  - "ssm:GetParameter"
+                  - "ssm:GetParameters"
+                  - "ssm:ListAssociations"
+                  - "ssm:ListInstanceAssociations"
+                  - "ssm:PutInventory"
+                  - "ssm:PutComplianceItems"
+                  - "ssm:PutConfigurePackageResult"
+                  - "ssm:UpdateAssociationStatus"
+                  - "ssm:UpdateInstanceAssociationStatus"
+                  - "ssm:UpdateInstanceInformation"
+                Effect: "Allow"
+              - Resource: "*"
+                Action:
+                  - "ssmmessages:CreateControlChannel"
+                  - "ssmmessages:CreateDataChannel"
+                  - "ssmmessages:OpenControlChannel"
+                  - "ssmmessages:OpenDataChannel"
+                Effect: "Allow"
+              - Resource: "*"
+                Action:
+                  - "ec2messages:AcknowledgeMessage"
+                  - "ec2messages:DeleteMessage"
+                  - "ec2messages:FailMessage"
+                  - "ec2messages:GetEndpoint"
+                  - "ec2messages:GetMessages"
+                  - "ec2messages:SendReply"
+                Effect: "Allow"
+              - Resource: "*"
+                Action:
+                  - "s3:GetEncryptionConfiguration"
+                Effect: "Allow"
+              - Resource: "*"
+                Action:
+                  - "kms:Decrypt"
+                Effect: "Allow"
+          PolicyName: "IAM_Role_AmazonSSMManagedInstanceCore_withSessionManager_and_Encryption"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Action: "sts:AssumeRole"
+            Effect: "Allow"
+            Principal:
+              Service: "ec2.amazonaws.com"
+
+  EC2Volume00vol5b5f19a0:
+    UpdateReplacePolicy: "Delete"
+    Type: "AWS::EC2::Volume"
+    DeletionPolicy: "Delete"
+    Properties:
+      MultiAttachEnabled: false
+      VolumeType: "gp2"
+      Encrypted: false
+      Size: 100
+      AutoEnableIO: false
+      AvailabilityZone: "us-east-1c"
+      Iops: 300
+      Tags:
+        - Value: "Marriott-DevWeb-2022-Data-2"
+          Key: "Name"
+
+  EC2VolumeAttachment00vol5b5f19a000KNYOa:
+    UpdateReplacePolicy: "Delete"
+    Type: "AWS::EC2::VolumeAttachment"
+    DeletionPolicy: "Delete"
+    Properties:
+      InstanceId: !Ref EC2Instance00
+      VolumeId: !Ref EC2Volume00vol5b5f19a0
+      Device: "xvdf"
+
+  KMSKey00:
+    UpdateReplacePolicy: "Delete"
+    Type: "AWS::KMS::Key"
+    DeletionPolicy: "Delete"
+    Properties:
+      Origin: "AWS_KMS"
+      MultiRegion: false
+      Description: "Default master key that protects my EBS volumes when no other key is defined"
+      KeyPolicy:
+        Version: "2012-10-17"
+        Statement:
+          - Condition:
+              StringEquals:
+                kms:CallerAccount: "854213821615"
+                kms:ViaService: "ec2.us-east-1.amazonaws.com"
+            Resource: "*"
+            Action:
+              - "kms:DescribeKey"
+              - "kms:GenerateDataKey*"
+              - "kms:CreateGrant"
+              - "kms:Encrypt"
+              - "kms:ReEncrypt*"
+              - "kms:Decrypt"
+            Effect: "Allow"
+            Principal:
+              AWS: "*"
+            Sid: "Allow access through EBS for all principals in the account that are authorized to use EBS"
+          - Resource: "*"
+            Action:
+              - "kms:Describe*"
+              - "kms:RevokeGrant"
+              - "kms:List*"
+              - "kms:Get*"
+            Effect: "Allow"
+            Principal:
+              AWS: "arn:aws:iam::854213821615:root"
+            Sid: "Allow direct access to key metadata to the account"
+        Id: "auto-ebs-2"
+      KeySpec: "SYMMETRIC_DEFAULT"
+      Enabled: true
+      EnableKeyRotation: true
+      KeyUsage: "ENCRYPT_DECRYPT"
+      Tags: []
+
+  EC2SecurityGroup00:
+    UpdateReplacePolicy: "Delete"
+    Type: "AWS::EC2::SecurityGroup"
+    DeletionPolicy: "Delete"
+    Properties:
+      GroupDescription: "Ritz-Webserver created 2015-02-12T09:03:51.994-05:00"
+      GroupName: "Ritz-Webserver"
+      VpcId: !Ref EC2VPC00
+      SecurityGroupIngress:
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: "tcp"
+          FromPort: 80
+          ToPort: 80
+        - CidrIp: "96.45.112.205/32"
+          IpProtocol: "udp"
+          Description: "AlienVault OSSIM from TLG"
+          FromPort: 1514
+          ToPort: 1514
+        - CidrIp: "96.45.112.205/32"
+          IpProtocol: "tcp"
+          Description: "Mark H TLG"
+          FromPort: 3389
+          ToPort: 3389
+        - CidrIp: "165.166.153.9/32"
+          IpProtocol: "tcp"
+          Description: "Rick South Carolina"
+          FromPort: 3389
+          ToPort: 3389
+        - CidrIp: "71.3.207.181/32"
+          IpProtocol: "tcp"
+          Description: "Diane Florida"
+          FromPort: 3389
+          ToPort: 3389
+        - CidrIp: "216.237.237.226/32"
+          IpProtocol: "tcp"
+          Description: "Mark H Home"
+          FromPort: 3389
+          ToPort: 3389
+        - CidrIp: "73.246.169.161/32"
+          IpProtocol: "tcp"
+          Description: "Rick Illinois"
+          FromPort: 3389
+          ToPort: 3389
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: "tcp"
+          FromPort: 443
+          ToPort: 443
+        - CidrIpv6: "::/0"
+          IpProtocol: "tcp"
+          FromPort: 443
+          ToPort: 443
+      SecurityGroupEgress:
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: "-1"
+          FromPort: -1
+          ToPort: -1
+      Tags:
+        - Value: "IIS-WebServer"
+          Key: "Name"
+
+  EC2Volume00vol0201dab4c82074c11:
+    UpdateReplacePolicy: "Delete"
+    Type: "AWS::EC2::Volume"
+    DeletionPolicy: "Delete"
+    Properties:
+      MultiAttachEnabled: false
+      VolumeType: "gp3"
+      KmsKeyId: !GetAtt KMSKey00.Arn
+      Encrypted: true
+      Size: 400
+      AutoEnableIO: false
+      AvailabilityZone: "us-east-1c"
+      Throughput: 125
+      Iops: 3000
+      Tags:
+        - Value: "Marriott-DevWeb-2022-Data-1-ENC"
+          Key: "Name"
+
+  EC2VolumeAttachment00vol0201dab4c82074c11001Kv90:
+    UpdateReplacePolicy: "Delete"
+    Type: "AWS::EC2::VolumeAttachment"
+    DeletionPolicy: "Delete"
+    Properties:
+      InstanceId: !Ref EC2Instance00
+      VolumeId: !Ref EC2Volume00vol0201dab4c82074c11
+      Device: "xvdb"

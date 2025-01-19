@@ -7,10 +7,8 @@
     <RollForward>Major</RollForward>
   </PropertyGroup>
 
-  <ItemGroup>
-    <!-- CDK Construct Library dependencies -->
-    <PackageReference Include="Amazon.CDK.AWS.S3" Version="1.204.0" />
-    <PackageReference Include="Amazon.CDK.Lib" Version="2.96.2" />
+ <ItemGroup>
+    <PackageReference Include="Amazon.CDK.Lib" Version="2.114.1" />
     <PackageReference Include="Constructs" Version="10.3.0" />
 
     <!-- jsii Roslyn analyzers (un-comment to obtain compile-time checks for missing required props
