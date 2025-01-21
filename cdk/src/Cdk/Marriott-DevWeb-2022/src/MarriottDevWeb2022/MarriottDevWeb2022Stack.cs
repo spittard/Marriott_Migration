@@ -8,7 +8,7 @@ public class MarriottDevWeb2022Stack : Stack
 {
     public MarriottDevWeb2022Stack(Construct scope, string id, IStackProps props = null) : base(scope, id, props)
     {
-        // VPC with cleanup configuration
+        // VPC configuration remains the same
         var vpc = new Vpc(this, "Vpc", new VpcProps
         {
             IpAddresses = IpAddresses.Cidr("10.0.0.0/16"),
@@ -28,34 +28,36 @@ public class MarriottDevWeb2022Stack : Stack
                 }
             }
         });
-
-        // Add removal policy to VPC
         vpc.ApplyRemovalPolicy(RemovalPolicy.DESTROY);
 
-        // Security Group with cleanup configuration
+        // Security Group configuration
         var securityGroup = new SecurityGroup(this, "SecurityGroup", new SecurityGroupProps
         {
             Vpc = vpc,
             Description = "Ritz-Webserver Security Group",
-            AllowAllOutbound = false,
+            AllowAllOutbound = true,
             SecurityGroupName = "marriott-web-sg"
         });
-
-        // Apply removal policy to security group
         securityGroup.ApplyRemovalPolicy(RemovalPolicy.DESTROY);
 
+        // Security group rules
         securityGroup.AddIngressRule(
-            Peer.Ipv4("10.0.0.0/8"), 
-            Port.Tcp(80), 
-            "Allow HTTP traffic from internal network"
+            Peer.AnyIpv4(),
+            Port.Tcp(3389),
+            "Allow RDP from anywhere"
         );
         securityGroup.AddIngressRule(
-            Peer.Ipv4("10.0.0.0/8"), 
+            Peer.AnyIpv4(), 
+            Port.Tcp(80), 
+            "Allow HTTP traffic"
+        );
+        securityGroup.AddIngressRule(
+            Peer.AnyIpv4(), 
             Port.Tcp(443), 
-            "Allow HTTPS traffic from internal network"
+            "Allow HTTPS traffic"
         );
 
-        // KMS Key with cleanup configuration
+        // KMS Key configuration
         var kmsKey = new Key(this, "KmsKey", new KeyProps
         {
             EnableKeyRotation = true,
@@ -65,7 +67,7 @@ public class MarriottDevWeb2022Stack : Stack
             PendingWindow = Duration.Days(7)
         });
 
-        // IAM Role with cleanup configuration
+        // IAM Role configuration
         var iamRole = new Role(this, "IamRole", new RoleProps
         {
             AssumedBy = new ServicePrincipal("ec2.amazonaws.com"),
@@ -79,26 +81,33 @@ public class MarriottDevWeb2022Stack : Stack
 
         kmsKey.GrantEncryptDecrypt(iamRole);
 
-        // Instance Profile with cleanup configuration
+        // Instance Profile configuration
         var instanceProfile = new CfnInstanceProfile(this, "InstanceProfile", new CfnInstanceProfileProps
         {
             Roles = new[] { iamRole.RoleName }
         });
         instanceProfile.ApplyRemovalPolicy(RemovalPolicy.DESTROY);
 
-        // Instance with cleanup configuration
-        var instance = new Amazon.CDK.AWS.EC2.CfnInstance(this, "Instance", new Amazon.CDK.AWS.EC2.CfnInstanceProps
+        // Windows Server 2022 AMI lookup
+        var windowsAmi = MachineImage.LatestWindows(WindowsVersion.WINDOWS_SERVER_2022_ENGLISH_FULL_BASE);
+
+        // Get the first public subnet
+        var publicSubnet = vpc.PublicSubnets[0];
+
+        // EC2 Instance configuration
+        var instance = new CfnInstance(this, "Instance", new CfnInstanceProps
         {
+            ImageId = windowsAmi.GetImage(this).ImageId,
             InstanceType = InstanceType.Of(InstanceClass.T3, InstanceSize.LARGE).ToString(),
-            ImageId = MachineImage.LatestAmazonLinux2().GetImage(this).ImageId,
-            SubnetId = vpc.PrivateSubnets[0].SubnetId,
+            SubnetId = publicSubnet.SubnetId,
             SecurityGroupIds = new[] { securityGroup.SecurityGroupId },
             IamInstanceProfile = instanceProfile.Ref,
-            BlockDeviceMappings = new[] {
-                new Amazon.CDK.AWS.EC2.CfnInstance.BlockDeviceMappingProperty
+            BlockDeviceMappings = new[]
+            {
+                new CfnInstance.BlockDeviceMappingProperty
                 {
                     DeviceName = "/dev/sda1",
-                    Ebs = new Amazon.CDK.AWS.EC2.CfnInstance.EbsProperty
+                    Ebs = new CfnInstance.EbsProperty
                     {
                         VolumeSize = 100,
                         VolumeType = "gp3",
@@ -107,37 +116,46 @@ public class MarriottDevWeb2022Stack : Stack
                         Iops = 3000
                     }
                 },
-                new Amazon.CDK.AWS.EC2.CfnInstance.BlockDeviceMappingProperty
+                new CfnInstance.BlockDeviceMappingProperty
                 {
                     DeviceName = "xvdb",
-                    Ebs = new Amazon.CDK.AWS.EC2.CfnInstance.EbsProperty
+                    Ebs = new CfnInstance.EbsProperty
                     {
                         VolumeSize = 400,
                         VolumeType = "gp3",
-                        Iops = 3000,
                         Encrypted = true,
-                        KmsKeyId = kmsKey.KeyId,
-                        DeleteOnTermination = true
+                        DeleteOnTermination = true,
+                        Iops = 3000,
+                        KmsKeyId = kmsKey.KeyId
                     }
                 },
-                new Amazon.CDK.AWS.EC2.CfnInstance.BlockDeviceMappingProperty
+                new CfnInstance.BlockDeviceMappingProperty
                 {
                     DeviceName = "xvdf",
-                    Ebs = new Amazon.CDK.AWS.EC2.CfnInstance.EbsProperty
+                    Ebs = new CfnInstance.EbsProperty
                     {
                         VolumeSize = 100,
                         VolumeType = "gp3",
-                        Iops = 3000,
                         Encrypted = true,
-                        DeleteOnTermination = true
+                        DeleteOnTermination = true,
+                        Iops = 3000
                     }
                 }
+            },
+            Tags = new[]
+            {
+                new CfnTag { Key = "Name", Value = "MarriottWeb" },
+                new CfnTag { Key = "Environment", Value = "Development" },
+                new CfnTag { Key = "Application", Value = "MarriottWeb" }
             }
         });
         instance.ApplyRemovalPolicy(RemovalPolicy.DESTROY);
 
-        // Add tags
-        Amazon.CDK.Tags.Of(instance).Add("Environment", "Development");
-        Amazon.CDK.Tags.Of(instance).Add("Application", "MarriottWeb");
+        // Output the instance ID
+        new CfnOutput(this, "InstanceId", new CfnOutputProps
+        {
+            Value = instance.Ref,
+            Description = "Instance ID"
+        });
     }
 }

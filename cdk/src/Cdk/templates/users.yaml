@@ -1,0 +1,66 @@
+---
+Metadata:
+  AWSToolsMetrics:
+    IaC_Generator: "arn:aws:cloudformation:us-east-1:854213821615:generatedTemplate/e234bc98-d632-4d8c-b0b4-f2ed4736313f"
+Resources:
+  IAMGroup00FullAccess005esCX:
+    UpdateReplacePolicy: "Retain"
+    Type: "AWS::IAM::Group"
+    DeletionPolicy: "Delete"
+    Properties:
+      GroupName: "FullAccess"
+      Path: "/"
+      ManagedPolicyArns:
+      - "arn:aws:iam::aws:policy/AdministratorAccess"
+  IAMUser00MarkHeddaeus00swrB3:
+    UpdateReplacePolicy: "Retain"
+    Type: "AWS::IAM::User"
+    DeletionPolicy: "Delete"
+    Properties:
+      Path: "/"
+      ManagedPolicyArns:
+      - "arn:aws:iam::aws:policy/IAMUserChangePassword"
+      - "arn:aws:iam::aws:policy/AdministratorAccess"
+      UserName: "Mark.Heddaeus"
+      LoginProfile:
+        PasswordResetRequired: false
+      Groups:
+      - Ref: "IAMGroup00FullAccess005esCX"
+  IAMUser00RickRegganie00EPAxD:
+    UpdateReplacePolicy: "Retain"
+    Type: "AWS::IAM::User"
+    DeletionPolicy: "Delete"
+    Properties:
+      Path: "/"
+      ManagedPolicyArns:
+      - "arn:aws:iam::aws:policy/IAMUserChangePassword"
+      - "arn:aws:iam::aws:policy/AdministratorAccess"
+      UserName: "Rick.Regganie"
+      LoginProfile:
+        PasswordResetRequired: false
+      Groups:
+      - Ref: "IAMGroup00FullAccess005esCX"
+  IAMUser00DianeSiebert00xPVwk:
+    UpdateReplacePolicy: "Retain"
+    Type: "AWS::IAM::User"
+    DeletionPolicy: "Delete"
+    Properties:
+      Path: "/"
+      UserName: "Diane.Siebert"
+      LoginProfile:
+        PasswordResetRequired: false
+      Groups:
+      - Ref: "IAMGroup00FullAccess005esCX"
+  IAMUser00ScottPittard00Zr5ID:
+    UpdateReplacePolicy: "Retain"
+    Type: "AWS::IAM::User"
+    DeletionPolicy: "Delete"
+    Properties:
+      Path: "/"
+      ManagedPolicyArns:
+      - "arn:aws:iam::aws:policy/IAMUserChangePassword"
+      UserName: "Scott.Pittard"
+      LoginProfile:
+        PasswordResetRequired: false
+      Groups:
+      - Ref: "IAMGroup00FullAccess005esCX"
