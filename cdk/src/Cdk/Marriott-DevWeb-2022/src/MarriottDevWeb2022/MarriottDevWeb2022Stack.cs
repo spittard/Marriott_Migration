@@ -2,13 +2,16 @@ using Amazon.CDK;
 using Amazon.CDK.AWS.EC2;
 using Amazon.CDK.AWS.IAM;
 using Amazon.CDK.AWS.KMS;
+using Amazon.CDK.AWS.SSM;
 using Constructs;
 
 public class MarriottDevWeb2022Stack : Stack
 {
     public MarriottDevWeb2022Stack(Construct scope, string id, IStackProps props = null) : base(scope, id, props)
     {
-        // VPC configuration remains the same
+        const string KEY_PAIR_NAME = "marriott-web-key";
+
+        // VPC configuration
         var vpc = new Vpc(this, "Vpc", new VpcProps
         {
             IpAddresses = IpAddresses.Cidr("10.0.0.0/16"),
@@ -29,6 +32,28 @@ public class MarriottDevWeb2022Stack : Stack
             }
         });
         vpc.ApplyRemovalPolicy(RemovalPolicy.DESTROY);
+
+        // Create a KMS key for the key pair encryption
+        var keyPairKmsKey = new Key(this, "KeyPairKmsKey", new KeyProps
+        {
+            EnableKeyRotation = true,
+            Description = "KMS key for EC2 key pair encryption",
+            Enabled = true,
+            RemovalPolicy = RemovalPolicy.DESTROY,
+            PendingWindow = Duration.Days(7)
+        });
+
+        // Create the key pair with automatic storage in Parameter Store
+        var keyPair = new CfnKeyPair(this, "MarriottWebKeyPair", new CfnKeyPairProps
+        {
+            KeyName = KEY_PAIR_NAME,
+            KeyType = "rsa",
+            KeyFormat = "pem",
+            Tags = new[] {
+                new CfnTag { Key = "Name", Value = "MarriottWebKeyPair" }
+            }
+        });
+        keyPair.ApplyRemovalPolicy(RemovalPolicy.DESTROY);
 
         // Security Group configuration
         var securityGroup = new SecurityGroup(this, "SecurityGroup", new SecurityGroupProps
@@ -57,8 +82,8 @@ public class MarriottDevWeb2022Stack : Stack
             "Allow HTTPS traffic"
         );
 
-        // KMS Key configuration
-        var kmsKey = new Key(this, "KmsKey", new KeyProps
+        // KMS Key configuration for EBS
+        var ebsKmsKey = new Key(this, "EbsKmsKey", new KeyProps
         {
             EnableKeyRotation = true,
             Description = "KMS key for EBS volume encryption",
@@ -79,7 +104,7 @@ public class MarriottDevWeb2022Stack : Stack
         });
         iamRole.ApplyRemovalPolicy(RemovalPolicy.DESTROY);
 
-        kmsKey.GrantEncryptDecrypt(iamRole);
+        ebsKmsKey.GrantEncryptDecrypt(iamRole);
 
         // Instance Profile configuration
         var instanceProfile = new CfnInstanceProfile(this, "InstanceProfile", new CfnInstanceProfileProps
@@ -102,6 +127,7 @@ public class MarriottDevWeb2022Stack : Stack
             SubnetId = publicSubnet.SubnetId,
             SecurityGroupIds = new[] { securityGroup.SecurityGroupId },
             IamInstanceProfile = instanceProfile.Ref,
+            KeyName = keyPair.KeyName,
             BlockDeviceMappings = new[]
             {
                 new CfnInstance.BlockDeviceMappingProperty
@@ -126,7 +152,7 @@ public class MarriottDevWeb2022Stack : Stack
                         Encrypted = true,
                         DeleteOnTermination = true,
                         Iops = 3000,
-                        KmsKeyId = kmsKey.KeyId
+                        KmsKeyId = ebsKmsKey.KeyId
                     }
                 },
                 new CfnInstance.BlockDeviceMappingProperty
@@ -144,18 +170,49 @@ public class MarriottDevWeb2022Stack : Stack
             },
             Tags = new[]
             {
-                new CfnTag { Key = "Name", Value = "MarriottWeb" },
+                new CfnTag { Key = "Name", Value = "MarriottDevWeb2022" },
                 new CfnTag { Key = "Environment", Value = "Development" },
                 new CfnTag { Key = "Application", Value = "MarriottWeb" }
             }
         });
         instance.ApplyRemovalPolicy(RemovalPolicy.DESTROY);
 
-        // Output the instance ID
+        // Output the instance ID and key pair info
         new CfnOutput(this, "InstanceId", new CfnOutputProps
         {
             Value = instance.Ref,
             Description = "Instance ID"
+        });
+
+        new CfnOutput(this, "KeyPairName", new CfnOutputProps
+        {
+            Value = keyPair.KeyName,
+            Description = "Name of the key pair for RDP access"
+        });
+
+        new CfnOutput(this, "KeyPairId", new CfnOutputProps
+        {
+            Value = keyPair.AttrKeyPairId,
+            Description = "Key Pair ID for retrieving the private key"
+        });
+
+        new CfnOutput(this, "PrivateKeyCommand", new CfnOutputProps
+        {
+            Value = $"aws ssm get-parameter --name /ec2/keypair/{keyPair.AttrKeyPairId} --with-decryption --query Parameter.Value --output text > {KEY_PAIR_NAME}.pem",
+            Description = "Command to retrieve the private key"
+        });
+
+        // Note: These outputs use Fn.GetAtt since we're using CfnInstance
+        new CfnOutput(this, "PublicIP", new CfnOutputProps
+        {
+            Value = Token.AsString(instance.GetAtt("PublicIp")),
+            Description = "Public IP address of the instance"
+        });
+
+        new CfnOutput(this, "PublicDNS", new CfnOutputProps
+        {
+            Value = Token.AsString(instance.GetAtt("PublicDnsName")),
+            Description = "Public DNS name of the instance"
         });
     }
 }
